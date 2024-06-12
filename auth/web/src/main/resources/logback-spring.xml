@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 日志级别从低到高分为TRACE < DEBUG < INFO < WARN < ERROR < FATAL，如果设置为WARN，则低于WARN的信息都不会输出 -->
+<!-- scan:当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true -->
+<!-- scanPeriod:设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性生效。默认的时间间隔为1分钟。 -->
+<!-- debug:当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。 -->
+<configuration scan="true" scanPeriod="10 seconds">
+    <property name="CONTEXT_NAME" value="keeay-customer" />
+    <property name="LOG_PATH" value="logs" />
+    <property name="MAX_FILE_SIZE" value="2048MB" />
+    <property name="MAX_HISTORY" value="30" />
+    <!--读取配置中心的属性 -->
+    <!-- <springProperty scope="context" name="LOG_PATH_NAME" source="logging.file.name"/> -->
+    <contextName>keeay-customer</contextName>
+    <!--输出到控制台 -->
+    <!-- %m输出的信息,%p日志级别,%t线程名,%d日期,%c类的全名,%-5level:级别从左显示5个字符宽度,%logger{50}:表示logger名字最长50个字符，否则按照句点分割，%msg:日志消息,%i索引【从数字0开始递增】 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <encoder>
+            <!--在控制台使用caller方式打印堆栈信息有超链接，使用replace去掉换行符-->
+            <Pattern>%d{HH:mm:ss.SSS} %X{traceId} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n</Pattern>
+            <!-- 设置字符集 -->
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!--所有日志输出到文件 -->
+    <appender name="fileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--日志名,指定最新的文件名，其他文件名使用FileNamePattern -->
+        <File>logs/${CONTEXT_NAME}/${CONTEXT_NAME}.log</File>
+        <!--日志文件输出格式 -->
+        <encoder>
+            <!--%logger{50}:表示logger名字最长50个字符，否则按照句点分割。
+             %M：输出执行日志请求的方法名。尽量避免使用，除非执行速度不造成任何问题。
+             %line：输出执行日志请求的行号。尽量避免使用，除非执行速度不造成任何问题。 -->
+            <!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [traceId:%X{traceId}][%t] %-5level %logger{50}.%M\(%line\) &#45;&#45; %msg%n</pattern>-->
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}[traceId:%X{traceId}] [%t] -- %msg%n</Pattern>
+            <charset>UTF-8</charset> <!-- 设置字符集 -->
+        </encoder>
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志归档 后面可以加.zip -->
+            <fileNamePattern>logs/${CONTEXT_NAME}/${CONTEXT_NAME}-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <!--日志文件保留天数 -->
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!--文件达到 最大时会被压缩和切割 -->
+                <maxFileSize>2048MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="fileAppender_async" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <appender-ref ref="fileAppender"/>
+        <!-- add the following line -->
+        <includeCallerData>true</includeCallerData>
+        <!-- 此日志文件只记录ERROR级别的 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 指定级别 -->
+            <level>INFO</level>
+            <!-- onMatch：意思是>=指定级别 接受 -->
+            <onMatch>ACCEPT</onMatch>
+            <!-- onMismatch：意思是<指定级别 拒绝 DENY/NEUTRAL/ACCEPT-->
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- ERROR 日志 -->
+    <appender name="errorAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--日志名,指定最新的文件名，其他文件名使用FileNamePattern -->
+        <File>logs/${CONTEXT_NAME}/${CONTEXT_NAME}-error.log</File>
+        <encoder>
+            <!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [traceId:%X{traceId}][%t] %-5level %logger{50}.%M\(%line\) &#45;&#45; %msg%n</pattern>-->
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}[traceId:%X{traceId}] [%t] -- %msg%n</Pattern>
+            <charset>UTF-8</charset> <!-- 此处设置字符集 -->
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/${CONTEXT_NAME}/${CONTEXT_NAME}-error-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- 此日志文件只记录ERROR级别的 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 指定级别 -->
+            <level>ERROR</level>
+            <!-- onMatch：意思是>=指定级别 接受 -->
+            <onMatch>ACCEPT</onMatch>
+            <!-- onMismatch：意思是<指定级别 拒绝 -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="errorAppender_async" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <appender-ref ref="errorAppender"/>
+        <!-- add the following line -->
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+
+    <!--http请求日志输出到文件 -->
+    <appender name="httpAccessDataAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--日志名,指定最新的文件名，其他文件名使用FileNamePattern -->
+        <File>logs/${CONTEXT_NAME}/access-data.log</File>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <!--日志文件输出格式 -->
+        <encoder>
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] -- %msg%n</Pattern>
+            <charset>UTF-8</charset> <!-- 设置字符集 -->
+        </encoder>
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志归档 后面可以加.zip -->
+            <fileNamePattern>logs/${CONTEXT_NAME}/access-data-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <!--日志文件保留天数 -->
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!--文件达到 最大时会被压缩和切割 -->
+                <maxFileSize>2048MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="accessDataLog" level="INFO" additivity="false">
+        <appender-ref ref="httpAccessDataAppender"/>
+    </logger>
+
+    <!--Feign请求日志输出到文件 -->
+    <appender name="FeignConsumerDataAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--日志名,指定最新的文件名，其他文件名使用FileNamePattern -->
+        <File>logs/feign-consumer.log</File>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <!--日志文件输出格式 -->
+        <encoder>
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [traceId:%X{traceId}][%t] -- %msg%n</Pattern>
+            <charset>UTF-8</charset> <!-- 设置字符集 -->
+        </encoder>
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志归档 后面可以加.zip -->
+            <fileNamePattern>logs/feign-consumer-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <!--日志文件保留天数 -->
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!--文件达到 最大时会被压缩和切割 -->
+                <maxFileSize>2048MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="feignConsumerLog" level="INFO" additivity="false">
+        <appender-ref ref="FeignConsumerDataAppender"/>
+    </logger>
+
+    <!-- root标签：相当于开关，只有把定义的appender添加到这里 才会生效有日志 -->
+    <root level="info">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="errorAppender_async" />
+        <appender-ref ref="fileAppender_async" />
+    </root>
+</configuration>

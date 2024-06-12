@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!-- 不使用namespace的话sql搜索定位会比较方便 -->
+<mapper namespace="com.keeay.anepoch.auth.service.dao.interfacewhitelistinfo.InterfaceWhiteListInfoMapper">
+	<resultMap id="interfaceWhiteListInfoResultMap" type="com.keeay.anepoch.auth.service.model.InterfaceWhiteListInfo">
+        <result property="id" column="id"/>
+        <result property="app" column="app"/>
+        <result property="server" column="server"/>
+        <result property="description" column="description"/>
+        <result property="remark" column="remark"/>
+        <result property="interfaceUrl" column="interface_url"/>
+        <result property="createUser" column="create_user"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateUser" column="update_user"/>
+        <result property="updateTime" column="update_time"/>
+	</resultMap>
+	<!-- 用于select查询公用抽取的列 -->
+	<sql id="InterfaceWhiteListInfoColumns">
+	    <![CDATA[
+		id,app,server,description,remark,interface_url,create_user,create_time,update_user,update_time
+	    ]]>
+	</sql>
+	<!--sql where查询条件定义-->
+	<sql id="listInterfaceWhiteListInfoWhere">
+		<!-- ognl访问静态方法的表达式 为@class@method(args),以下为调用rapid中的Ognl.isNotEmpty()方法,还有其它方法如isNotBlank()可以使用，具体请查看Ognl类 -->
+		<where>
+			<if test="id!=null">
+				AND id = #{id}
+			</if>
+			<if test="app!=null">
+				AND app = #{app}
+			</if>
+			<if test="server!=null">
+				AND server = #{server}
+			</if>
+			<if test="description!=null">
+				AND description = #{description}
+			</if>
+			<if test="remark!=null">
+				AND remark = #{remark}
+			</if>
+			<if test="interfaceUrl!=null">
+				AND interface_url = #{interfaceUrl}
+			</if>
+			<if test="createUser!=null">
+				AND create_user = #{createUser}
+			</if>
+			<if test="createTime!=null">
+				AND create_time = #{createTime}
+			</if>
+			<if test="updateUser!=null">
+				AND update_user = #{updateUser}
+			</if>
+			<if test="updateTime!=null">
+				AND update_time = #{updateTime}
+			</if>
+		</where>
+	</sql>
+	<!--sql limit查询条件定义-->
+	<sql id="limit">
+	<if test="_offset != null and _limit != null">
+			limit #{_offset}, #{_limit}
+		</if>
+		<if test="_offset == null and _limit != null">
+			limit #{_limit}
+		</if>
+		<if test="_offset == null and _limit == null">
+			<include refid="max_limit"/>
+		</if>
+	</sql>
+
+	<sql id="max_limit">
+		limit 500
+	</sql>
+
+	<sql id="orderby">
+		<choose>
+			<when test='_orderby != null'>
+				order by
+				<foreach collection="_orderby" item="item" index="index" separator=",">
+					${item}
+					</foreach>
+				</when>
+			<otherwise>
+				<include refid="orderById"/>
+				</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="orderById">
+		order by create_time desc
+	</sql>
+
+	<!-- useGeneratedKeys="true" keyProperty="xxx" for sqlserver and mysql -->
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO interface_white_list_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id!=null">
+				id,
+			</if>
+			<if test="app!=null">
+				app,
+			</if>
+			<if test="server!=null">
+				server,
+			</if>
+			<if test="description!=null">
+				description,
+			</if>
+			<if test="remark!=null">
+				remark,
+			</if>
+			<if test="interfaceUrl!=null">
+				interface_url,
+			</if>
+			<if test="createUser!=null">
+				create_user,
+			</if>
+			<if test="createTime!=null">
+				create_time,
+			</if>
+			<if test="updateUser!=null">
+				update_user,
+			</if>
+			<if test="updateTime!=null">
+				update_time,
+			</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+				<if test="id!=null">
+						#{id,jdbcType=BIGINT},
+				</if>
+				<if test="app!=null">
+						#{app,jdbcType=VARCHAR},
+				</if>
+				<if test="server!=null">
+						#{server,jdbcType=VARCHAR},
+				</if>
+				<if test="description!=null">
+						#{description,jdbcType=VARCHAR},
+				</if>
+				<if test="remark!=null">
+						#{remark,jdbcType=VARCHAR},
+				</if>
+				<if test="interfaceUrl!=null">
+						#{interfaceUrl,jdbcType=VARCHAR},
+				</if>
+				<if test="createUser!=null">
+						#{createUser,jdbcType=VARCHAR},
+				</if>
+				<if test="createTime!=null">
+						#{createTime,jdbcType=TIMESTAMP},
+				</if>
+				<if test="updateUser!=null">
+						#{updateUser,jdbcType=VARCHAR},
+				</if>
+				<if test="updateTime!=null">
+						#{updateTime,jdbcType=TIMESTAMP}
+				</if>
+        </trim>
+	</insert>
+
+	<update id="update" >
+        UPDATE interface_white_list_info SET
+		<trim suffixOverrides=",">
+	        <if test="app!=null">
+	        app = #{app,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="server!=null">
+	        server = #{server,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="description!=null">
+	        description = #{description,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="remark!=null">
+	        remark = #{remark,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="interfaceUrl!=null">
+	        interface_url = #{interfaceUrl,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="createUser!=null">
+	        create_user = #{createUser,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="createTime!=null">
+	        create_time = #{createTime,jdbcType=TIMESTAMP} ,
+	        </if>
+	        <if test="updateUser!=null">
+	        update_user = #{updateUser,jdbcType=VARCHAR} ,
+	        </if>
+	        <if test="updateTime!=null">
+	        update_time = #{updateTime,jdbcType=TIMESTAMP} ,
+	        </if>
+		</trim>
+        WHERE 
+	        id = #{id} 
+	</update>
+
+	<!--逻辑删除记录-->
+	<delete id="delete">
+		UPDATE interface_white_list_info SET delete_flag = 1
+		<include refid="listInterfaceWhiteListInfoWhere"/>
+	</delete>
+
+    <!--
+    	分页查询已经使用Dialect进行分页,也可以不使用Dialect直接编写分页
+    	因为分页查询将传 offset,pageSize,lastRows 三个参数,不同的数据库可以根于此三个参数属性应用不同的分页实现
+    -->
+
+	<!--全量查询-->
+    <select id="list" resultMap="interfaceWhiteListInfoResultMap">
+    	SELECT <include refid="InterfaceWhiteListInfoColumns" /> FROM interface_white_list_info
+		<include refid="listInterfaceWhiteListInfoWhere"/>
+    </select>
+
+	<!--该方法适用于，获取的数据条数小于等于1 如有特殊需要自己实现-->
+	<select id="getDetailById" resultMap="interfaceWhiteListInfoResultMap">
+		SELECT <include refid="InterfaceWhiteListInfoColumns" />
+		FROM interface_white_list_info
+		where id = #{id}
+	</select>
+</mapper>
+

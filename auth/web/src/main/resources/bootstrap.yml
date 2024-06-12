@@ -1,0 +1,39 @@
+# 开发环境
+spring:
+    profiles.active: dev
+    application:
+        name: keeay-auth # 服务名称
+    cloud:
+        # 本地开发环境
+        #        nacos:
+        #            discovery:
+        #                server-addr: 47.111.18.118:8848 # Nacos地
+        #                namespace: prod
+        #            server-addr: 47.111.18.118:8848 # Nacos地
+        #            config:
+        #                file-extension: yaml # 文件后缀名
+        #                prefix: digital-auth
+        #                namespace: prod
+        # 开发环境
+        #        nacos:
+        #            discovery:
+        #                server-addr: 47.99.170.142:8848 # Nacos地
+        #                namespace: dev
+        #            server-addr: 47.99.170.142:8848 # Nacos地
+        #            config:
+        #                file-extension: yaml # 文件后缀名
+        #                prefix: digital-user
+        #                namespace: dev
+
+        # 测试环境
+        nacos:
+            discovery:
+                server-addr: 47.99.170.142:8848 # Nacos地
+                namespace: dev
+            server-addr: 47.99.170.142:8848 # Nacos地
+            config:
+                file-extension: txt # 文件后缀名
+                prefix: keeay-auth
+                namespace: dev
+            username: nacos
+            password: nacos
