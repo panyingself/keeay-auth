@@ -18,11 +18,11 @@ public enum HttpResultCodeEnum {
     /**
      * token失效
      */
-    TOKEN_INVALIDATION(401, "token失效"),
+    TOKEN_INVALIDATION(401, "用户未登录"),
     /**
      * 没有权限
      */
-    PERMISSION_DENIED(403, "访问被拒绝"),
+    PERMISSION_DENIED(403, "权限不足"),
     ;
 
     private Integer code;

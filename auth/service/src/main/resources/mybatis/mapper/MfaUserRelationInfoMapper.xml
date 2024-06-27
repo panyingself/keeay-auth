@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 不使用namespace的话sql搜索定位会比较方便 -->
+<mapper namespace="com.keeay.anepoch.auth.service.dao.mfauserrelationinfo.MfaUserRelationInfoMapper">
+    <resultMap id="mfaUserRelationInfoResultMap" type="com.keeay.anepoch.auth.service.model.MfaUserRelationInfo">
+        <result property="id" column="id"/>
+        <result property="appCode" column="app_code"/>
+        <result property="appName" column="app_name"/>
+        <result property="userCode" column="user_code"/>
+        <result property="mfaSecret" column="mfa_secret"/>
+        <result property="mfaText" column="mfa_text"/>
+    </resultMap>
+    <!-- 用于select查询公用抽取的列 -->
+    <sql id="MfaUserRelationInfoColumns">
+        <![CDATA[
+		id,app_code,app_name,user_code,mfa_secret,mfa_text
+	    ]]>
+    </sql>
+    <!--sql where查询条件定义-->
+    <sql id="listInterfaceWhiteListInfoWhere">
+        <!-- ognl访问静态方法的表达式 为@class@method(args),以下为调用rapid中的Ognl.isNotEmpty()方法,还有其它方法如isNotBlank()可以使用，具体请查看Ognl类 -->
+        <where>
+            <if test="id!=null">
+                AND id = #{id}
+            </if>
+            <if test="appCode!=null">
+                AND app_code = #{appCode}
+            </if>
+            <if test="userCode!=null">
+                AND user_code = #{userCode}
+            </if>
+        </where>
+    </sql>
+    <!--sql limit查询条件定义-->
+    <sql id="limit">
+        <if test="_offset != null and _limit != null">
+            limit #{_offset}, #{_limit}
+        </if>
+        <if test="_offset == null and _limit != null">
+            limit #{_limit}
+        </if>
+        <if test="_offset == null and _limit == null">
+            <include refid="max_limit"/>
+        </if>
+    </sql>
+
+    <sql id="max_limit">
+        limit 500
+    </sql>
+
+    <sql id="orderby">
+        <choose>
+            <when test='_orderby != null'>
+                order by
+                <foreach collection="_orderby" item="item" index="index" separator=",">
+                    ${item}
+                </foreach>
+            </when>
+            <otherwise>
+                <include refid="orderById"/>
+            </otherwise>
+        </choose>
+    </sql>
+
+    <sql id="orderById">
+        order by create_time desc
+    </sql>
+
+    <!-- useGeneratedKeys="true" keyProperty="xxx" for sqlserver and mysql -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mfa_user_relation_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id!=null">
+                id,
+            </if>
+            <if test="appCode!=null">
+                app_code,
+            </if>
+            <if test="appName!=null">
+                app_name,
+            </if>
+            <if test="userCode!=null">
+                user_code,
+            </if>
+            <if test="mfaSecret!=null">
+                mfa_secret,
+            </if>
+            <if test="mfaText!=null">
+                mfa_text,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id!=null">
+                #{id,jdbcType=BIGINT},
+            </if>
+            <if test="appCode!=null">
+                #{appCode,jdbcType=VARCHAR},
+            </if>
+            <if test="appName!=null">
+                #{appName,jdbcType=VARCHAR},
+            </if>
+            <if test="userCode!=null">
+                #{userCode,jdbcType=VARCHAR},
+            </if>
+            <if test="mfaSecret!=null">
+                #{mfaSecret,jdbcType=VARCHAR},
+            </if>
+            <if test="mfaText!=null">
+                #{mfaText,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="update">
+    </update>
+
+    <!--逻辑删除记录-->
+    <delete id="delete">
+    </delete>
+
+    <!--
+    	分页查询已经使用Dialect进行分页,也可以不使用Dialect直接编写分页
+    	因为分页查询将传 offset,pageSize,lastRows 三个参数,不同的数据库可以根于此三个参数属性应用不同的分页实现
+    -->
+
+    <!--全量查询-->
+    <select id="list" resultMap="mfaUserRelationInfoResultMap">
+    </select>
+
+    <!--该方法适用于，获取的数据条数小于等于1 如有特殊需要自己实现-->
+    <select id="getDetailById" resultMap="mfaUserRelationInfoResultMap">
+    </select>
+
+    <select id="getOne" resultMap="mfaUserRelationInfoResultMap">
+        SELECT
+        <include refid="MfaUserRelationInfoColumns"/>
+        FROM mfa_user_relation_info
+        where app_code = #{appCode} and user_code = #{userCode}
+        limit 1
+    </select>
+</mapper>
+

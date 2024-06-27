@@ -78,9 +78,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .headers().frameOptions().disable();
         // 添加JWT filter(用户名密码认证filter之前添加jwt认证filter)
-        httpSecurity.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
+//        httpSecurity.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
+//        // 添加CORS filter
+//        httpSecurity.addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class);
+//        httpSecurity.addFilterBefore(corsFilter, LogoutFilter.class);
+        httpSecurity.addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class);
         // 添加CORS filter
-        httpSecurity.addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class);
         httpSecurity.addFilterBefore(corsFilter, LogoutFilter.class);
     }
 

@@ -1,17 +1,22 @@
 package com.keeay.anepoch.auth.biz.auth.helper;
 
+import com.keeay.anepoch.auth.biz.auth.bo.TokenBo;
 import com.keeay.anepoch.auth.biz.feign.adapter.UserFeignAdapter;
 import com.keeay.anepoch.auth.biz.interfacewhitelistinfo.InterfaceWhiteListInfoBiz;
 import com.keeay.anepoch.auth.commons.enums.HttpResultCodeEnum;
+import com.keeay.anepoch.base.commons.exception.BizException;
 import com.keeay.anepoch.base.commons.exception.ErrorCode;
 import com.keeay.anepoch.base.commons.lang.Safes;
 import com.keeay.anepoch.base.commons.utils.ConditionUtils;
+import com.keeay.anepoch.base.commons.utils.JsonMoreUtils;
+import com.keeay.anepoch.redis.component.utils.RedisStringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Description:
@@ -26,6 +31,9 @@ public class AuthHelper {
     private InterfaceWhiteListInfoBiz interfaceWhiteListInfoBiz;
     @Resource
     private UserFeignAdapter userFeignAdapter;
+    @Resource
+    private RedisStringUtils redisStringUtils;
+    private static final String REDIS_LOGIN_USER_KEY = "login_user_";
 
     /**
      * 白名单校验
@@ -56,5 +64,31 @@ public class AuthHelper {
         Boolean hasServletPermission = userFeignAdapter.checkUserServletPermission(userCode, servletPath);
         ConditionUtils.checkArgument(hasServletPermission, ErrorCode.of(HttpResultCodeEnum.PERMISSION_DENIED.getCode(), HttpResultCodeEnum.PERMISSION_DENIED.getMessage()));
 
+    }
+
+    /**
+     * 校验MFA
+     *
+     * @param redisLoginUser redisLoginUser
+     */
+    public void checkMfaCondition(TokenBo redisLoginUser) {
+        if (redisLoginUser.getMfaFlag()) {
+            log.info("MFA认证通过,continue");
+            return;
+        }
+        log.error("MFA未认证，强制访问失败,userCode : {}", redisLoginUser.getUserCode());
+        throw new BizException(ErrorCode.of(HttpResultCodeEnum.TOKEN_INVALIDATION.getCode(), HttpResultCodeEnum.TOKEN_INVALIDATION.getMessage()));
+    }
+
+    public void saveRedisLoginUser(TokenBo tokenBo) {
+        redisStringUtils.setForExpire(REDIS_LOGIN_USER_KEY + tokenBo.getUserCode(), JsonMoreUtils.toJson(tokenBo), 1800L, TimeUnit.SECONDS);
+    }
+
+    public TokenBo getRedisLoginUser(String userCode) {
+        Object o = redisStringUtils.get(REDIS_LOGIN_USER_KEY + userCode);
+        if (Objects.isNull(o)) {
+            return null;
+        }
+        return JsonMoreUtils.toBean(o.toString(), TokenBo.class);
     }
 }

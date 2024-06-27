@@ -3,7 +3,7 @@ package com.keeay.anepoch.auth.biz.accredit;
 import com.keeay.anepoch.user.api.request.LoginVerifyFeignRequest;
 
 /**
- * Description:
+ * Description: 授权
  *
  * @author -  pany
  * Time - 2024/4/23 - 10:51

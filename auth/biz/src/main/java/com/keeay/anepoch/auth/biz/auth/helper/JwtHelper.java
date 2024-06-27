@@ -49,6 +49,8 @@ public class JwtHelper {
     public static final String TOKEN_PREFIX = "Bearer ";
     @Resource
     private RedisStringUtils redisStringUtils;
+    @Resource
+    private AuthHelper authHelper;
 
 
     /**
@@ -61,6 +63,8 @@ public class JwtHelper {
     public String buildLoginToken(Map<String, Object> claims, UserSystemEnum userSystemEnum) {
         claims.put("type", userSystemEnum.name());
         claims.put("expireTime", LocalDateTime.now().plusMinutes(expireTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+        //MFA是否已认证标识
+        claims.put("mfaFlag", Boolean.FALSE);
         return createToken(claims);
     }
 
@@ -102,6 +106,7 @@ public class JwtHelper {
         tokenBo.setUserName(claims.get("userName").toString());
         tokenBo.setUserType(claims.get("type").toString());
         tokenBo.setExpireTime((Long) claims.get("expireTime"));
+        tokenBo.setMfaFlag((Boolean) claims.get("mfaFlag"));
         return tokenBo;
     }
 
@@ -123,11 +128,10 @@ public class JwtHelper {
     /**
      * 校验登录状态是否过期(如果没在redis中，则代表已经过期)
      *
-     * @param userCode userCode
+     * @param redisLoginUser redisLoginUser
      */
-    public void checkExpireForRedis(String userCode) {
-        Object userCodeFromRedis = redisStringUtils.get(userCode);
-        ConditionUtils.checkArgument(Objects.nonNull(userCodeFromRedis), ErrorCode.of(HttpResultCodeEnum.TOKEN_INVALIDATION.getCode(), HttpResultCodeEnum.TOKEN_INVALIDATION.getMessage()));
+    public void checkExpireForRedis(TokenBo redisLoginUser) {
+        ConditionUtils.checkArgument(Objects.nonNull(redisLoginUser), ErrorCode.of(HttpResultCodeEnum.TOKEN_INVALIDATION.getCode(), HttpResultCodeEnum.TOKEN_INVALIDATION.getMessage()));
     }
 
     /**

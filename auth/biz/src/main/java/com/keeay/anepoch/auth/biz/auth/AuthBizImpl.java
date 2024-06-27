@@ -66,7 +66,7 @@ public class AuthBizImpl implements AuthBiz {
      */
     private void verifyUserNotLogin(String servletPath) {
         Boolean isWhiteList = authHelper.checkWhiteList(servletPath);
-        ConditionUtils.checkArgument(isWhiteList, ErrorCode.of(HttpResultCodeEnum.PERMISSION_DENIED.getCode(), HttpResultCodeEnum.PERMISSION_DENIED.getMessage()));
+        ConditionUtils.checkArgument(isWhiteList, ErrorCode.of(HttpResultCodeEnum.TOKEN_INVALIDATION.getCode(), HttpResultCodeEnum.TOKEN_INVALIDATION.getMessage()));
     }
 
     /**

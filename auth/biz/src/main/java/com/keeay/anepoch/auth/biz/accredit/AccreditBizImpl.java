@@ -1,6 +1,8 @@
 package com.keeay.anepoch.auth.biz.accredit;
 
 import com.google.common.collect.Maps;
+import com.keeay.anepoch.auth.biz.auth.bo.TokenBo;
+import com.keeay.anepoch.auth.biz.auth.helper.AuthHelper;
 import com.keeay.anepoch.auth.biz.auth.helper.JwtHelper;
 import com.keeay.anepoch.auth.biz.feign.adapter.UserFeignAdapter;
 import com.keeay.anepoch.auth.commons.enums.UserSystemEnum;
@@ -14,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,6 +32,8 @@ import java.util.Objects;
 public class AccreditBizImpl implements AccreditBiz {
     @Resource
     private JwtHelper jwtHelper;
+    @Resource
+    private AuthHelper authHelper;
     @Resource
     private UserFeignAdapter userFeignAdapter;
 
@@ -49,7 +55,16 @@ public class AccreditBizImpl implements AccreditBiz {
                 ConditionUtils.checkArgument(Objects.nonNull(loginUserFeignResponse), "认证信息错误");
                 //生成jwt返回
                 Map<String, Object> claims = JsonMoreUtils.ofMap(JsonMoreUtils.toJson(loginUserFeignResponse), String.class, Object.class);
-                return jwtHelper.buildLoginToken(claims, UserSystemEnum.USER);
+                String userToken = jwtHelper.buildLoginToken(claims, UserSystemEnum.USER);
+                //设置用户redis信息
+                TokenBo tokenBo = new TokenBo();
+                tokenBo.setUserName(loginUserFeignResponse.getUserName());
+                tokenBo.setUserCode(loginUserFeignResponse.getUserCode());
+                tokenBo.setUserType(claims.get("type").toString());
+                tokenBo.setExpireTime(Long.valueOf(claims.get("expireTime").toString()));
+                tokenBo.setMfaFlag(Boolean.valueOf(claims.get("mfaFlag").toString()));
+                authHelper.saveRedisLoginUser(tokenBo);
+                return userToken;
             }
         }.execute();
     }

@@ -3,7 +3,7 @@ package com.keeay.anepoch.auth.biz.auth;
 import com.keeay.anepoch.auth.api.context.LoginUser;
 
 /**
- * Description:
+ * Description: 鉴权/身份验证
  *
  * @author -  pany
  * Time - 2024/4/15 - 11:50

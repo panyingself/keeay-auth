@@ -36,4 +36,4 @@ spring:
                 prefix: keeay-auth
                 namespace: dev
             username: nacos
-            password: nacos
+            password: 123456

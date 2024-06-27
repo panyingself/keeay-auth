@@ -31,6 +31,10 @@ public class TokenBo implements Serializable {
      * 过期时间
      */
     private Long expireTime;
+    /**
+     * 是否已经认证过mfa
+     */
+    private Boolean mfaFlag;
 
     @Override
     public String toString() {
