@@ -40,8 +40,8 @@ public class MfaController {
      * @throws IOException     IOException
      */
     @GetMapping("/generate-qr")
-    public void generateQRCode(@RequestParam String userCode, HttpServletResponse response) throws WriterException, IOException {
-        String qrCodeText = mfaBiz.generateMfaUrl(userCode);
+    public void generateQRCode(@RequestParam String jwt, HttpServletResponse response) throws WriterException, IOException {
+        String qrCodeText = mfaBiz.generateMfaUrl(jwt);
 
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(qrCodeText, BarcodeFormat.QR_CODE, 200, 200);
@@ -51,11 +51,11 @@ public class MfaController {
     }
 
     @PostMapping("/verify-otp")
-    public HttpResult<Boolean> verifyOTP(@RequestParam String otpCode, @RequestParam String userCode) {
-        Boolean result = mfaBiz.verifyOptCode(userCode, otpCode);
-        if(result){
-            return HttpResult.success(true,"验证成功");
+    public HttpResult<Boolean> verifyOTP(@RequestParam String jwt, @RequestParam String otpCode) {
+        Boolean result = mfaBiz.verifyOptCode(jwt, otpCode);
+        if (result) {
+            return HttpResult.success(true, "验证成功");
         }
-        return HttpResult.success(false,"验证失败");
+        return HttpResult.success(false, "验证失败");
     }
 }

@@ -2,6 +2,7 @@ package com.keeay.anepoch.auth.biz.mfa;
 
 import com.keeay.anepoch.auth.biz.auth.bo.TokenBo;
 import com.keeay.anepoch.auth.biz.auth.helper.AuthHelper;
+import com.keeay.anepoch.auth.biz.auth.helper.JwtHelper;
 import com.keeay.anepoch.auth.service.model.MfaUserRelationInfo;
 import com.keeay.anepoch.auth.service.service.mfauserrelationinfo.MfaUserRelationInfoService;
 import com.keeay.anepoch.base.commons.exception.BizException;
@@ -34,24 +35,27 @@ public class MfaBizImpl implements MfaBiz {
     private MfaUserRelationInfoService mfaUserRelationInfoService;
     @Resource
     private AuthHelper authHelper;
+    @Resource
+    private JwtHelper jwtHelper;
 
     /**
      * 验证otpCode是否正确
      *
-     * @param userCode    userCode
+     * @param jwt    userCode
      * @param userOtpCode userOtpCode(用户实时验证码)
      * @return success true orElse false
      */
     @Override
-    public Boolean verifyOptCode(String userCode, String userOtpCode) {
-        log.info("verifyOptCode biz start, userCode : {} , userOtpCode : {}", userCode, userOtpCode);
+    public Boolean verifyOptCode(String jwt, String userOtpCode) {
+        log.info("verifyOptCode biz start, userCode : {} , userOtpCode : {}", jwt, userOtpCode);
         return new BaseBizTemplate<Boolean>() {
             @Override
             protected Boolean process() {
+                TokenBo tokenBo = jwtHelper.getTokenBo(jwt);
                 //根据userCode查询绑定的otp secret key
-                MfaUserRelationInfo fromDb = mfaUserRelationInfoService.getOne(APP_CODE, userCode);
+                MfaUserRelationInfo fromDb = mfaUserRelationInfoService.getOne(APP_CODE, tokenBo.getUserCode());
                 if (Objects.isNull(fromDb)) {
-                    log.error("用户未曾绑定OPT信息,userCode : {}", userCode);
+                    log.error("用户未曾绑定OPT信息,userCode : {}", tokenBo.getUserName());
                     throw new BizException("验证码错误");
                 }
                 String generatedOtp = getTOTPCode(fromDb.getMfaSecret());
@@ -60,7 +64,7 @@ public class MfaBizImpl implements MfaBiz {
                     //校验成功
                     if (generatedOtp.equals(userOtpCode)) {
                         //将用户设置为登录成功
-                        TokenBo redisLoginUser = authHelper.getRedisLoginUser(userCode);
+                        TokenBo redisLoginUser = authHelper.getRedisLoginUser(tokenBo.getUserCode());
                         redisLoginUser.setMfaFlag(Boolean.TRUE);
                         authHelper.saveRedisLoginUser(redisLoginUser);
                         return true;
@@ -90,19 +94,20 @@ public class MfaBizImpl implements MfaBiz {
     /**
      * 生成mfa二维码url
      *
-     * @param userCode userCode
+     * @param jwt userCode
      * @return url
      */
     @Override
-    public String generateMfaUrl(String userCode) {
-        log.info("generateMfaUrl biz start, userCode : {} ", userCode);
+    public String generateMfaUrl(String jwt) {
+        log.info("generateMfaUrl biz start, jwt : {} ", jwt);
         return new BaseBizTemplate<String>() {
             @Override
             protected String process() {
                 String qrCodeText = "";
                 try {
+                    TokenBo tokenBo = jwtHelper.getTokenBo(jwt);
                     //查询是否存在，存在就用已有的
-                    MfaUserRelationInfo fromDb = mfaUserRelationInfoService.getOne(APP_CODE, userCode);
+                    MfaUserRelationInfo fromDb = mfaUserRelationInfoService.getOne(APP_CODE, tokenBo.getUserCode());
                     if (Objects.nonNull(fromDb)) {
                         return fromDb.getMfaText();
                     }
@@ -111,7 +116,7 @@ public class MfaBizImpl implements MfaBiz {
                     qrCodeText = String.format(
                             "otpauth://totp/%s:%s?secret=%s&issuer=%s",
                             URLEncoder.encode(ISSUER, StandardCharsets.UTF_8.toString()),
-                            URLEncoder.encode(userCode, StandardCharsets.UTF_8.toString()),
+                            URLEncoder.encode(tokenBo.getUserCode(), StandardCharsets.UTF_8.toString()),
                             secret,
                             URLEncoder.encode(ISSUER, StandardCharsets.UTF_8.toString())
                     );
@@ -119,7 +124,7 @@ public class MfaBizImpl implements MfaBiz {
                     MfaUserRelationInfo waitToDb = new MfaUserRelationInfo();
                     waitToDb.setAppCode(APP_CODE);
                     waitToDb.setAppName(APP_NAME);
-                    waitToDb.setUserCode(userCode);
+                    waitToDb.setUserCode(tokenBo.getUserCode());
                     waitToDb.setMfaSecret(secret);
                     waitToDb.setMfaText(qrCodeText);
                     mfaUserRelationInfoService.insert(waitToDb);

@@ -30,8 +30,9 @@ public class AccreditController {
      *
      * @return 用户授权信息(jwt)
      */
-    @GetMapping("/user/accreditForAccount")
+    @PostMapping("/user/accreditForAccount")
     public HttpResult<String> accreditForUserB(@RequestBody LoginAccountVerifyFeignRequest accountVerifyRequest) {
+//        return HttpResult.success("abs");
         LoginVerifyFeignRequest loginVerifyFeignRequest = new LoginVerifyFeignRequest();
         loginVerifyFeignRequest.setAccountVerifyRequest(accountVerifyRequest);
         loginVerifyFeignRequest.setType(VerifyLoginTypeEnum.ACCOUNT);

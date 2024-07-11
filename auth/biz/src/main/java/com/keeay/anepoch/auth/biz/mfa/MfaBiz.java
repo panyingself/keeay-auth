@@ -10,17 +10,17 @@ public interface MfaBiz {
     /**
      * 验证otpCode是否正确
      *
-     * @param userCode    userCode
+     * @param jwt    jwt
      * @param userOtpCode userOtpCode(用户实时验证码)
      * @return success true orElse false
      */
-    Boolean verifyOptCode(String userCode, String userOtpCode);
+    Boolean verifyOptCode(String jwt, String userOtpCode);
 
     /**
      * 生成mfa二维码url
      *
-     * @param userCode userCode
+     * @param jwt jwt
      * @return url
      */
-    String generateMfaUrl(String userCode);
+    String generateMfaUrl(String jwt);
 }

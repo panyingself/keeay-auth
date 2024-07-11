@@ -2,6 +2,7 @@
 
 package com.keeay.anepoch.auth.web;
 
+import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 /**
  * @author py
  */
+@Slf4j
 @SpringBootApplication
 @EnableConfigurationProperties
 @MapperScan("com.keeay.anepoch.auth.service.dao")
@@ -28,6 +30,7 @@ public class Application extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+        log.info("=====================项目启动成功===================");
     }
 
     /**
@@ -36,8 +39,7 @@ public class Application extends SpringBootServletInitializer {
      * @param builder builder
      */
     @Override
-    protected SpringApplicationBuilder configure(
-            SpringApplicationBuilder builder) {
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
         return builder.sources(this.getClass());
     }
 
