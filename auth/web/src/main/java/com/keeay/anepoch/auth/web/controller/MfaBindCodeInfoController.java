@@ -3,7 +3,7 @@ package com.keeay.anepoch.auth.web.controller;
 
 import com.keeay.anepoch.auth.biz.mfabindcodeinfo.MfaBindCodeInfoBiz;
 import com.keeay.anepoch.auth.biz.mfabindcodeinfo.bo.MfaBindCodeInfoBo;
-import com.keeay.anepoch.auth.web.controller.mfabindcodeinfo.request.*;
+import com.keeay.anepoch.auth.web.controller.request.MfaBindCodeInfoAddRequest;
 import com.keeay.anepoch.base.commons.base.result.HttpResult;
 import com.keeay.anepoch.base.commons.utils.JsonMoreUtils;
 import org.springframework.web.bind.annotation.*;

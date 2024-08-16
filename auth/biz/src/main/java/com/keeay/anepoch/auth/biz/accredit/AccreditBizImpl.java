@@ -1,11 +1,13 @@
 package com.keeay.anepoch.auth.biz.accredit;
 
 import com.google.common.collect.Maps;
+import com.keeay.anepoch.auth.biz.accredit.processor.AccountLockProcessor;
 import com.keeay.anepoch.auth.biz.auth.bo.TokenBo;
 import com.keeay.anepoch.auth.biz.auth.helper.AuthHelper;
 import com.keeay.anepoch.auth.biz.auth.helper.JwtHelper;
 import com.keeay.anepoch.auth.biz.feign.adapter.UserFeignAdapter;
 import com.keeay.anepoch.auth.commons.enums.UserSystemEnum;
+import com.keeay.anepoch.base.commons.exception.BizException;
 import com.keeay.anepoch.base.commons.monitor.BaseBizTemplate;
 import com.keeay.anepoch.base.commons.utils.ConditionUtils;
 import com.keeay.anepoch.base.commons.utils.JsonMoreUtils;
@@ -16,8 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
 
@@ -36,6 +36,8 @@ public class AccreditBizImpl implements AccreditBiz {
     private AuthHelper authHelper;
     @Resource
     private UserFeignAdapter userFeignAdapter;
+    @Resource
+    private AccountLockProcessor accountLockProcessor;
 
     /**
      * 获取B端用户名密码模式jwt
@@ -47,16 +49,59 @@ public class AccreditBizImpl implements AccreditBiz {
     public String verifyAndGetJwtForUser(LoginVerifyFeignRequest loginVerifyFeignRequest) {
         log.info("verifyAndGetJwtForUser biz start, loginVerifyFeignRequest : {}", loginVerifyFeignRequest);
         return new BaseBizTemplate<String>() {
+
+            @Override
+            protected void checkParam() {
+                ConditionUtils.checkArgument(Objects.nonNull(loginVerifyFeignRequest.getType()), "type is blank");
+            }
+
             @Override
             protected String process() {
-                ConditionUtils.checkArgument(Objects.nonNull(loginVerifyFeignRequest.getType()), "type is blank");
-                //查询验证用户信息是否存在
+                // 前置条件校验
+                this.preConditionCheck(loginVerifyFeignRequest);
+                // 开始认证
                 LoginUserFeignResponse loginUserFeignResponse = userFeignAdapter.checkUserLogin(loginVerifyFeignRequest);
-                ConditionUtils.checkArgument(Objects.nonNull(loginUserFeignResponse), "认证信息错误");
-                //生成jwt返回
+                // 认证失败处理
+                if (Objects.isNull(loginUserFeignResponse)) {
+                    return this.handleForFailure();
+                }
+                // 认证成功处理
+                return this.handleForSuccess(loginUserFeignResponse);
+
+            }
+
+            /**
+             * 前置条件校验
+             * @param loginVerifyFeignRequest loginVerifyFeignRequest
+             */
+            private void preConditionCheck(LoginVerifyFeignRequest loginVerifyFeignRequest) {
+                // 错误限流
+                accountLockProcessor.process(loginVerifyFeignRequest.getAccountVerifyRequest().getLoginName())
+                        // 校验10分钟错误限流
+                        .checkLockFor10Minutes();
+            }
+
+            /**
+             * 认证失败结果处理
+             * @return result
+             */
+            private String handleForFailure() {
+                accountLockProcessor.process(loginVerifyFeignRequest.getAccountVerifyRequest().getLoginName())
+                        // 10分钟错误限流处理
+                        .lockFor10Minutes();
+                return "";
+            }
+
+            /**
+             * 认证成功结果处理
+             * @param loginUserFeignResponse loginUserFeignResponse
+             * @return result
+             */
+            private String handleForSuccess(LoginUserFeignResponse loginUserFeignResponse) {
+                // 登录认证成功,生成jwt返回
                 Map<String, Object> claims = JsonMoreUtils.ofMap(JsonMoreUtils.toJson(loginUserFeignResponse), String.class, Object.class);
                 String userToken = jwtHelper.buildLoginToken(claims, UserSystemEnum.USER);
-                //设置用户redis信息
+                // 设置用户redis信息(30分钟有效)
                 TokenBo tokenBo = new TokenBo();
                 tokenBo.setUserName(loginUserFeignResponse.getUserName());
                 tokenBo.setUserCode(loginUserFeignResponse.getUserCode());
@@ -64,6 +109,8 @@ public class AccreditBizImpl implements AccreditBiz {
                 tokenBo.setExpireTime(Long.valueOf(claims.get("expireTime").toString()));
                 tokenBo.setMfaFlag(Boolean.valueOf(claims.get("mfaFlag").toString()));
                 authHelper.saveRedisLoginUser(tokenBo);
+                // 清除lock count
+                accountLockProcessor.process(loginVerifyFeignRequest.getAccountVerifyRequest().getLoginName()).cleanLock();
                 return userToken;
             }
         }.execute();
