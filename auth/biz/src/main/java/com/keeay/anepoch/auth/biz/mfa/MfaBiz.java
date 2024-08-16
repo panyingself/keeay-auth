@@ -10,7 +10,7 @@ public interface MfaBiz {
     /**
      * 验证otpCode是否正确
      *
-     * @param jwt    jwt
+     * @param jwt         jwt
      * @param userOtpCode userOtpCode(用户实时验证码)
      * @return success true orElse false
      */
@@ -23,4 +23,12 @@ public interface MfaBiz {
      * @return url
      */
     String generateMfaUrl(String jwt);
+
+    /**
+     * 删除用户mfa数据
+     *
+     * @param userCode userCode
+     * @return success true orElse false
+     */
+    Boolean removeUserMfa(String userCode);
 }

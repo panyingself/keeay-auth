@@ -19,4 +19,12 @@ public interface MfaUserRelationInfoMapper extends BaseMapper<MfaUserRelationInf
      * @return one
      */
     MfaUserRelationInfo getOne(@Param("appCode") String appCode, @Param("userCode") String userCode);
+
+    /**
+     * 根据用户编码删除数据
+     *
+     * @param userCode userCode
+     * @return success true orElse false
+     */
+    Integer deleteByUserCode(@Param("userCode") String userCode);
 }

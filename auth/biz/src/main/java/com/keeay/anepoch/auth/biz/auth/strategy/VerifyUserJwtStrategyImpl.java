@@ -32,8 +32,6 @@ public class VerifyUserJwtStrategyImpl implements VerifyJwtStrategy {
         TokenBo redisLoginUser = authHelper.getRedisLoginUser(tokenBo.getUserCode());
         //登录状态和过期时间校验
         jwtHelper.checkExpireForRedis(redisLoginUser);
-        //mfa验证
-        authHelper.checkMfaCondition(redisLoginUser);
         //校验过期时间
         jwtHelper.checkExpireForCreateTime(tokenBo.getExpireTime());
         //白名单校验
@@ -41,6 +39,8 @@ public class VerifyUserJwtStrategyImpl implements VerifyJwtStrategy {
         if (whiteListFlag) {
             return;
         }
+        //mfa验证
+        authHelper.checkMfaCondition(redisLoginUser);
         //权限校验
         authHelper.checkUserServletPermission(tokenBo.getUserCode(), servletPath);
         //refresh redis token expire time

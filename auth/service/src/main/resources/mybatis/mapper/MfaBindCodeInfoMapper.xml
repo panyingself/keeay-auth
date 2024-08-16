@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
 <!-- 不使用namespace的话sql搜索定位会比较方便 -->
-<mapper namespace="com.keeay.anepoch.auth.service.dao.mfauserrelationinfo.MfaUserRelationInfoMapper">
-    <resultMap id="mfaUserRelationInfoResultMap" type="com.keeay.anepoch.auth.service.model.MfaUserRelationInfo">
+<mapper namespace="com.keeay.anepoch.auth.service.dao.mfabindcodeinfo.MfaBindCodeInfoMapper">
+    <resultMap id="mfaBindCodeInfoResultMap" type="com.keeay.anepoch.auth.service.model.MfaBindCodeInfo">
         <result property="id" column="id"/>
         <result property="appCode" column="app_code"/>
         <result property="appName" column="app_name"/>
         <result property="userCode" column="user_code"/>
-        <result property="mfaSecret" column="mfa_secret"/>
-        <result property="mfaText" column="mfa_text"/>
+        <result property="checkCode" column="check_code"/>
+        <result property="useFlag" column="use_flag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createUser" column="create_user"/>
     </resultMap>
     <!-- 用于select查询公用抽取的列 -->
-    <sql id="MfaUserRelationInfoColumns">
+    <sql id="MfaBindCodeInfoColumns">
         <![CDATA[
-		id,app_code,app_name,user_code,mfa_secret,mfa_text
+		id,app_code,app_name,user_code,use_flag,create_time,create_user,check_code
 	    ]]>
     </sql>
     <!--sql where查询条件定义-->
-    <sql id="listInterfaceWhiteListInfoWhere">
+    <sql id="listMfaBindCodeInfoWhere">
         <!-- ognl访问静态方法的表达式 为@class@method(args),以下为调用rapid中的Ognl.isNotEmpty()方法,还有其它方法如isNotBlank()可以使用，具体请查看Ognl类 -->
         <where>
             <if test="id!=null">
@@ -27,8 +31,23 @@
             <if test="appCode!=null">
                 AND app_code = #{appCode}
             </if>
+            <if test="appName!=null">
+                AND app_name = #{appName}
+            </if>
             <if test="userCode!=null">
                 AND user_code = #{userCode}
+            </if>
+            <if test="checkCode!=null">
+                AND check_code = #{checkCode}
+            </if>
+            <if test="useFlag!=null">
+                AND use_flag = #{useFlag}
+            </if>
+            <if test="createTime!=null">
+                AND create_time = #{createTime}
+            </if>
+            <if test="createUser!=null">
+                AND create_user = #{createUser}
             </if>
         </where>
     </sql>
@@ -69,7 +88,7 @@
 
     <!-- useGeneratedKeys="true" keyProperty="xxx" for sqlserver and mysql -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO mfa_user_relation_info
+        INSERT INTO mfa_bind_code_info
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="id!=null">
                 id,
@@ -83,11 +102,17 @@
             <if test="userCode!=null">
                 user_code,
             </if>
-            <if test="mfaSecret!=null">
-                mfa_secret,
+            <if test="checkCode!=null">
+                check_code,
             </if>
-            <if test="mfaText!=null">
-                mfa_text,
+            <if test="useFlag!=null">
+                use_flag,
+            </if>
+            <if test="createTime!=null">
+                create_time,
+            </if>
+            <if test="createUser!=null">
+                create_user,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -103,27 +128,60 @@
             <if test="userCode!=null">
                 #{userCode,jdbcType=VARCHAR},
             </if>
-            <if test="mfaSecret!=null">
-                #{mfaSecret,jdbcType=VARCHAR},
+            <if test="checkCode!=null">
+                #{checkCode},
             </if>
-            <if test="mfaText!=null">
-                #{mfaText,jdbcType=VARCHAR},
+            <if test="useFlag!=null">
+                #{useFlag,jdbcType=BIT},
+            </if>
+            <if test="createTime!=null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createUser!=null">
+                #{createUser,jdbcType=VARCHAR}
             </if>
         </trim>
     </insert>
 
     <update id="update">
+        UPDATE mfa_bind_code_info SET
+        <trim suffixOverrides=",">
+            <if test="appCode!=null">
+                app_code = #{appCode,jdbcType=VARCHAR} ,
+            </if>
+            <if test="appName!=null">
+                app_name = #{appName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="userCode!=null">
+                user_code = #{userCode,jdbcType=VARCHAR} ,
+            </if>
+            <if test="useFlag!=null">
+                use_flag = #{useFlag,jdbcType=BIT} ,
+            </if>
+            <if test="createTime!=null">
+                create_time = #{createTime,jdbcType=TIMESTAMP} ,
+            </if>
+            <if test="createUser!=null">
+                create_user = #{createUser,jdbcType=VARCHAR} ,
+            </if>
+        </trim>
+        WHERE
+        id = #{id}
+    </update>
+
+    <update id="updateUserUseFlagUsed">
+        UPDATE mfa_bind_code_info SET
+        use_flag = 1
+        WHERE
+        app_code = #{appCode,jdbcType=VARCHAR}
+        and app_name = #{appName,jdbcType=VARCHAR}
+        and user_code = #{userCode,jdbcType=VARCHAR}
     </update>
 
     <!--逻辑删除记录-->
     <delete id="delete">
-    </delete>
-
-    <!--逻辑删除记录-->
-    <delete id="deleteByUserCode">
-        delete from mfa_user_relation_info
-        where
-        user_code = #{userCode}
+        UPDATE mfa_bind_code_info SET delete_flag = 1
+        <include refid="listMfaBindCodeInfoWhere"/>
     </delete>
 
     <!--
@@ -132,19 +190,19 @@
     -->
 
     <!--全量查询-->
-    <select id="list" resultMap="mfaUserRelationInfoResultMap">
+    <select id="list" resultMap="mfaBindCodeInfoResultMap">
+        SELECT
+        <include refid="MfaBindCodeInfoColumns"/>
+        FROM mfa_bind_code_info
+        <include refid="listMfaBindCodeInfoWhere"/>
     </select>
 
     <!--该方法适用于，获取的数据条数小于等于1 如有特殊需要自己实现-->
-    <select id="getDetailById" resultMap="mfaUserRelationInfoResultMap">
-    </select>
-
-    <select id="getOne" resultMap="mfaUserRelationInfoResultMap">
+    <select id="getDetailById" resultMap="mfaBindCodeInfoResultMap">
         SELECT
-        <include refid="MfaUserRelationInfoColumns"/>
-        FROM mfa_user_relation_info
-        where app_code = #{appCode} and user_code = #{userCode}
-        limit 1
+        <include refid="MfaBindCodeInfoColumns"/>
+        FROM mfa_bind_code_info
+        where id = #{id}
     </select>
 </mapper>
 

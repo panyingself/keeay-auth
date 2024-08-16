@@ -6,6 +6,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.keeay.anepoch.auth.biz.mfa.MfaBiz;
+import com.keeay.anepoch.auth.web.controller.request.MfaRequest;
 import com.keeay.anepoch.base.commons.base.result.HttpResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +41,7 @@ public class MfaController {
      * @throws IOException     IOException
      */
     @GetMapping("/generate-qr")
-    public void generateQRCode(@RequestParam String jwt, HttpServletResponse response) throws WriterException, IOException {
+    public void generateQrCode(@RequestParam String jwt, HttpServletResponse response) throws WriterException, IOException {
         String qrCodeText = mfaBiz.generateMfaUrl(jwt);
 
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
@@ -51,8 +52,8 @@ public class MfaController {
     }
 
     @PostMapping("/verify-otp")
-    public HttpResult<Boolean> verifyOTP(@RequestParam String jwt, @RequestParam String otpCode) {
-        Boolean result = mfaBiz.verifyOptCode(jwt, otpCode);
+    public HttpResult<Boolean> verifyOtp(@RequestBody MfaRequest mfaRequest) {
+        Boolean result = mfaBiz.verifyOptCode(mfaRequest.getJwt(), mfaRequest.getOtpCode());
         if (result) {
             return HttpResult.success(true, "验证成功");
         }

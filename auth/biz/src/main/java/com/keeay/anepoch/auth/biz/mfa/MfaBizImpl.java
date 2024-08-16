@@ -7,10 +7,12 @@ import com.keeay.anepoch.auth.service.model.MfaUserRelationInfo;
 import com.keeay.anepoch.auth.service.service.mfauserrelationinfo.MfaUserRelationInfoService;
 import com.keeay.anepoch.base.commons.exception.BizException;
 import com.keeay.anepoch.base.commons.monitor.BaseBizTemplate;
+import com.keeay.anepoch.base.commons.utils.ConditionUtils;
 import de.taimos.totp.TOTP;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -41,7 +43,7 @@ public class MfaBizImpl implements MfaBiz {
     /**
      * 验证otpCode是否正确
      *
-     * @param jwt    userCode
+     * @param jwt         userCode
      * @param userOtpCode userOtpCode(用户实时验证码)
      * @return success true orElse false
      */
@@ -108,9 +110,7 @@ public class MfaBizImpl implements MfaBiz {
                     TokenBo tokenBo = jwtHelper.getTokenBo(jwt);
                     //查询是否存在，存在就用已有的
                     MfaUserRelationInfo fromDb = mfaUserRelationInfoService.getOne(APP_CODE, tokenBo.getUserCode());
-                    if (Objects.nonNull(fromDb)) {
-                        return fromDb.getMfaText();
-                    }
+                    ConditionUtils.checkArgument(Objects.isNull(fromDb), "已绑定过MFA设备");
                     //不存在，重新生成
                     String secret = getSecretKey();
                     qrCodeText = String.format(
@@ -133,6 +133,28 @@ public class MfaBizImpl implements MfaBiz {
                     throw new BizException("系统异常");
                 }
                 return qrCodeText;
+            }
+        }.execute();
+    }
+
+    /**
+     * 删除用户mfa数据
+     *
+     * @param userCode userCode
+     * @return success true orElse false
+     */
+    @Override
+    public Boolean removeUserMfa(String userCode) {
+        log.info("removeUserMfa biz start, userCode : {}", userCode);
+        return new BaseBizTemplate<Boolean>() {
+            @Override
+            protected void checkParam() {
+                ConditionUtils.checkArgument(StringUtils.isNotBlank(userCode), "userCode is blank");
+            }
+
+            @Override
+            protected Boolean process() {
+                return mfaUserRelationInfoService.deleteByUserCode(userCode);
             }
         }.execute();
     }
